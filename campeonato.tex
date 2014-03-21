@@ -1,0 +1,46 @@
+\documentclass[11pt]{article}
+\usepackage[brazil]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{t1enc}
+\usepackage[utf8]{inputenc}
+\usepackage{indentfirst}
+
+\title{\textbf{Campeonato MC346}}
+
+\date{}
+\begin{document}
+
+\maketitle
+
+\section{Descrição do Jogo}
+
+O jogo é jogado por dois jogadores, A e B em em um tabuleiro m x n onde existem espaços vazios, X muros, K recursos, R robôs pertencentes ao jogador A e R robôs pertencentes ao jogador B.
+
+Cada robô começa com o valor inicial de energia igual a 1.
+
+O jogo é inicializado aleatoriamente com os parâmetros respeitando os seguintes limites:
+\begin{itemize}
+\item{m - 10 a 30}
+\item{n - 10 a 30}
+\item{X - 5 a 15}
+\item{R - 2 a 6}
+\item{K - 2 a 10}
+\end{itemize}
+
+\subsection{Ações}
+O jogo alterna entre ações do jogador A e B, começando pelo jogador A. Uma ação é composta pelo identificador de um dos robôs do jogador e uma direção (Norte,Sul,Leste,Oeste). Se o movimento for válido, o robô escolhido então moverá um quadrado para a direção desejada. O movimento será inválido se a posição que o robô ocuparia após o movimento estiver fora do tabuleiro, for um muro ou for outro robô controlado pelo jogador.
+
+\subsection{Recursos}
+Caso haja um recurso na nova posição do robô, este robô adquire este recurso e soma o valor desse recurso à sua energia.
+
+\subsection{Combate}
+Caso haja um robô adversário na nova posição do robô, os dois robôs entram em combate. Em um combate, se os robôs tem a mesma quantidade de energia, ambos são destruídos. Se um robô tem mais energia que o outro, este robô prevalece e o outro robô é destruído. O robô ganhador tem a quantidade de energia igual a que possuía menos a quantidade de energia do robô destruído.
+
+\subsection{Fim do jogo}
+O jogo termina caso um dos jogadores ficar sem nenhum robô ou o jogo ultrapasse o número máximo de rodadas (90).
+
+No primeiro caso, ganha o jogador que destrui os robôs adversário.
+
+No segundo caso, conta-se a quantidade de energia dos robôs restantes de cada jogador e aquele que obtiver mais energia é o ganhador. Se ambos os jogadores tiverem a mesma quantidade de energia, aquele que tiver mais robôs é o ganhador. Se os jogadores tiverem o mesmo número de robôs, o jogo termina em empate.
+
+\end{document}
