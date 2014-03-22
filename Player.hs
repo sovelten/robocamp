@@ -1,11 +1,11 @@
+module Player where
+
 import Board
 import System.Random
 import Utils
 import Data.List
 import Data.Maybe
 import Control.Monad
-import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
 
 data Direction = North | South | West | East
 
@@ -61,12 +61,12 @@ readCmd str = (p, ((x1,y1),(x2,y2)))
 sendMove :: RobotPlayer -> Board -> IO Board
 sendMove p board = do
     let (m,newBoard) = action p board  
-    TIO.putStrLn $ T.pack $ command p m
+    putStrLn $ command p m
     return newBoard 
 
 recvMove :: Board -> IO Board
 recvMove board = do
-    (_,(p1,p2)) <- fmap (readCmd . T.unpack) TIO.getLine
+    (_,(p1,p2)) <- fmap (readCmd) getLine
     let newBoard = updateMatrix p2 (fromPos p1 board) board
     return newBoard
 
@@ -84,11 +84,11 @@ main2 = do
     interaction p board
     --return ()
     
-main = do
+main3 = do
     p <- fmap read getLine
-    [m,n] <- fmap ((map read) . words . T.unpack) TIO.getLine
-    board <- fmap (fromJust . readBoard . map T.unpack) (replicateM m TIO.getLine)
-    init <- fmap T.unpack TIO.getLine
+    [m,n] <- fmap ((map read) . words) getLine
+    board <- fmap (fromJust . readBoard) (replicateM m getLine)
+    init <- getLine
     if init == "start" then do
         board <- sendMove p board
         board <- recvMove board
