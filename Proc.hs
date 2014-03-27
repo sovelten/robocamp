@@ -1,18 +1,23 @@
+import Control.Monad
 import System.Process
 import System.IO
 import System.Random
 import Board
 
 main = do
-    (hin,hout,herr,pl) <- (runInteractiveCommand "./PlayerMain")
-    hSetBinaryMode hin False
-    hSetBinaryMode hout False
-    hSetBuffering hin LineBuffering
-    hSetBuffering hout NoBuffering
+    (hinA,houtA,herrA,pA) <- (runInteractiveCommand "./PlayerInteractive")
+    (hinB,houtB,herrB,pB) <- (runInteractiveCommand "./PlayerInteractive")
+    mapM_ (flip hSetBinaryMode False) [hinA,hinB,houtA,houtB]
+    mapM_ (flip hSetBuffering LineBuffering) [hinA,hinB]
+    mapM_ (flip hSetBuffering NoBuffering) [houtA,houtB]
     g <- getStdGen
     let board = genBoard g
     let (m,n) = (length board, length (head board))
-    let str = "B\n" ++ show m ++ " " ++ show n ++ "\n" ++ (prettyBoard board) ++ "\n"
-    hPutStr hin str
-    out <- hGetLine hout 
-    putStrLn out
+    let str = show m ++ " " ++ show n ++ "\n" ++ (prettyBoard board)
+    hPutStr hinA ("A\n" ++ str)
+    hPutStr hinB ("B\n" ++ str)
+    fMove <- hGetLine houtA
+    putStrLn fMove
+    hPutStrLn hinB fMove
+    sMove <- hGetLine houtB
+    putStrLn sMove

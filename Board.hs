@@ -4,6 +4,7 @@ import System.Random
 import System.Random.Shuffle
 import Utils
 import Data.Char
+import Data.Maybe
 
 --Board definition
 type Board = [[Square]]
@@ -23,6 +24,8 @@ data RobotPlayer = A | B deriving (Read, Show, Eq)
 --Resource definition
 data Resource = Resource Int
     deriving (Show, Eq)
+
+data Move = Move RobotPlayer Pos Pos
 
 --Pretty printing
 prettyBoard :: Board -> String
@@ -52,7 +55,20 @@ readSquare (x:xs)
     | any (x==) ['A','B']  = (Just (R (Robot (read [x]) (read xs))))
     | x == 'R' = (Just (E (Resource (read xs))))
     | otherwise = Nothing
-    
+
+inside :: (Int,Int) -> Pos -> Bool
+inside (m,n) (x,y) = x >= 0 && x < n && y >= 0 && y < n
+
+west (x,y) = (x-1,y)
+east (x,y) = (x+1,y)
+north (x,y) = (x,y-1)
+south (x,y) = (x,y+1)
+
+bounds :: [[a]] -> (Int,Int)
+bounds b = (length b, length (head b))
+
+insideBoard :: Board -> (Int, Int) -> Bool
+insideBoard = inside . bounds
 
 --Generate random board
 
@@ -98,18 +114,47 @@ isRobot r = case r of
     (R _) -> True
     _ -> False
 
+--Tests whether a square contains a robot controlled by a player
+isFromPlayer :: RobotPlayer -> Square -> Bool
+isFromPlayer p (R (Robot q _)) = p == q
+isFromPlayer _ __ = False
+
 --Checks if a move is valid
-isValid :: (Pos,Pos) -> Board -> Bool
-isValid (p1,p2) board = (isRobot piece) && (dest == Empty)
+isValid :: RobotPlayer -> (Pos,Pos) -> Board -> Bool
+isValid pl (p1,p2) board = isFromPlayer pl piece && isAdjacent && isInside
     where piece = fromPos p1 board
-          dest  = fromPos p2 board
+          isAdjacent = any (==p2) (map ($p1) [west,east,north,south])
+          isInside = insideBoard board p2
+
+--Defines result of a movement
+encounter :: Robot -> Square -> Maybe Square
+encounter r s = case s of
+    (E (Resource i)) -> (Just (R (Robot p (e+i))))
+    (R (Robot q f)) ->
+        if e > f then (Just (R (Robot p (e-f))))
+        else if f > e then (Just (R (Robot q (f-e))))
+        else Just Empty
+    (Empty) -> (Just (R r))
+    _ -> Nothing
+    where
+        p = robotPlayer r
+        e = robotEnergy r
 
 --returns new board if move is valid
-move :: (Pos,Pos) -> Board -> Maybe Board
-move (p1,p2) board = if isValid (p1,p2) board 
-    then Just $ updateMatrix p2 (fromPos p1 board) (updateMatrix p1 (Empty) board)
+boardMove :: Move -> Board -> Maybe Board
+boardMove (Move pl p1 p2) board =
+    if isValid pl (p1,p2) board 
+        then if isJust newPiece
+            then Just $ updateMatrix p2 (fromJust newPiece) (updateMatrix p1 (Empty) board)
+            else Nothing
     else Nothing
+    where
+        robot = fromSquare $ fromPos p1 board
+        newPiece = encounter robot (fromPos p2 board)
+         
 
-isPlayer :: RobotPlayer -> Square -> Bool
-isPlayer p (R (Robot b _)) = p == b
-isPlayer _ _ = False
+--Will fail if Square is not a Robot
+fromSquare :: Square -> Robot
+fromSquare s = case s of
+    (R r) -> r
+    _ -> error "Square is not a Robot"

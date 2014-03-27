@@ -4,6 +4,9 @@ import System.IO
 import Control.Monad
 import Data.Maybe
 
+--Jogador interativo
+--Armazena o estado do tabuleiro e alterna entre receber acao do oponente na entrada padrao
+-- e enviar uma acao na saida padrao
 main = do
     hSetBuffering stdout LineBuffering
     p <- fmap read getLine
