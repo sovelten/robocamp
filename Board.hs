@@ -26,6 +26,11 @@ data Resource = Resource Int
     deriving (Show, Eq)
 
 data Move = Move RobotPlayer Pos Pos
+    deriving (Show)
+
+opponent :: RobotPlayer -> RobotPlayer
+opponent A = B
+opponent B = A
 
 --Pretty printing
 prettyBoard :: Board -> String
@@ -152,9 +157,15 @@ boardMove (Move pl p1 p2) board =
         robot = fromSquare $ fromPos p1 board
         newPiece = encounter robot (fromPos p2 board)
          
-
 --Will fail if Square is not a Robot
 fromSquare :: Square -> Robot
 fromSquare s = case s of
     (R r) -> r
     _ -> error "Square is not a Robot"
+
+--Returns the positions of all the robots from a player
+getRobots :: RobotPlayer -> Board -> [Pos]
+getRobots p board = findPos (isFromPlayer p) board
+
+outOfRobots :: RobotPlayer -> Board -> Bool
+outOfRobots p board = null (getRobots p board)

@@ -2,19 +2,9 @@ module Player where
 
 import Board
 import System.Random
-import Utils
 import Data.List
 import Data.Maybe
 import Control.Monad
-
-getRobots :: RobotPlayer -> Board -> [Pos]
-getRobots p board = findPos (isFromPlayer p) board
-
---Gives a list of positions of all the elements matching the predicate
-findPos :: (a -> Bool) -> [[a]] -> [Pos]
-findPos f board = findAux 0 board
-    where findAux i (x:xs) = (map (\x -> (i,x)) (findIndices f x)) ++ (findAux (i+1) xs)
-          findAux _ [] = []
 
 action :: RobotPlayer -> Board -> (Move,Board)
 action p board = ((Move p p1 p2), (fromJust $ boardMove (Move p p1 p2) board))
