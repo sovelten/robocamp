@@ -5,7 +5,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{indentfirst}
 
-\title{\textbf{Campeonato MC346}}
+\title{\textbf{Luta de Robôs -- Campeonato MC346 -- 2014-1S}}
 
 \date{}
 \begin{document}
@@ -14,7 +14,7 @@
 
 \section{Descrição do Jogo}
 
-O jogo é jogado por dois jogadores, A e B em em um tabuleiro m x n onde existem espaços vazios, X muros, K recursos, R robôs pertencentes ao jogador A e R robôs pertencentes ao jogador B.
+O jogo é jogado por dois jogadores, A e B em em um tabuleiro $m \times n$ onde existem espaços vazios, $X$ muros, $K$ recursos, $R$ robôs pertencentes ao jogador $A$ e $R$ robôs pertencentes ao jogador $B$.
 
 Cada robô começa com o valor inicial de energia igual a 1.
 
@@ -22,13 +22,13 @@ O jogo é inicializado aleatoriamente com os parâmetros respeitando os seguinte
 \begin{itemize}
 \item{m - 10 a 30}
 \item{n - 10 a 30}
-\item{X - 5 a 15}
+\item{X - 5 a 25}
 \item{R - 2 a 6}
 \item{K - 2 a 10}
 \end{itemize}
 
 \subsection{Ações}
-O jogo alterna entre ações do jogador A e B, começando pelo jogador A. Uma ação é composta pelo identificador de um dos robôs do jogador e uma direção (Norte,Sul,Leste,Oeste). Se o movimento for válido, o robô escolhido então moverá um quadrado para a direção desejada. O movimento será inválido se a posição que o robô ocuparia após o movimento estiver fora do tabuleiro, for um muro ou for outro robô controlado pelo jogador.
+O jogo alterna entre ações do jogador A e B, começando pelo jogador A. Uma ação é composta pelo identificador do jogador, a posição do robô e a posição de destino. O Robô pode se mover 1 quadrado para cima, para baixo, para esquerda ou para direita. Se o movimento for válido, o robô escolhido então moverá para a posição desejada. O movimento será inválido se a posição que o robô ocuparia após o movimento estiver fora do tabuleiro, for um muro ou for outro robô controlado pelo jogador.
 
 \subsection{Recursos}
 Caso haja um recurso na nova posição do robô, este robô adquire este recurso e soma o valor desse recurso à sua energia.
@@ -42,5 +42,54 @@ O jogo termina caso um dos jogadores ficar sem nenhum robô ou o jogo ultrapasse
 No primeiro caso, ganha o jogador que destrui os robôs adversário.
 
 No segundo caso, conta-se a quantidade de energia dos robôs restantes de cada jogador e aquele que obtiver mais energia é o ganhador. Se ambos os jogadores tiverem a mesma quantidade de energia, aquele que tiver mais robôs é o ganhador. Se os jogadores tiverem o mesmo número de robôs, o jogo termina em empate.
+
+\section{Protocolo de Comunicação}
+
+O processo do jogador se comunica com o processo do jogo através da entrada e saída padrão. O formato inicial da entrada segue o seguinte modelo:
+\begin{verbatim}
+A
+15 21
+........................................R1
+........................XX......XXR1......
+........................XX....R1..........
+........B1..........R1....................
+................R1........................
+..........................................
+R1..........R1..R1..A1....XX..............
+..XX........XX..R1........................
+..................R1......................
+XX......XX..........................R1....
+..XXA1XX..................................
+....XX..XX..XX..................XX....XX..
+......................B1..................
+......R1..........XX........XX........XX..
+..............XX......XX..................
+\end{verbatim}
+
+A primeira linha informa ao jogador se ele será o jogador A ou o jogador B.
+
+A segunda linha contém dois inteiros que especificam o tamanho do tabuleiro (m e n).
+
+Depois seguem m linhas contendo $n \times 2$ caracteres ASCII. Cada dupla de caracteres corresponde a um quadrado no tabuleiro.
+
+\begin{itemize}
+\item{$..$ $\rightarrow$ espaço vazio}
+\item{$XX$ $\rightarrow$ muro}
+\item{$Ad$ ou $Bd$ $\rightarrow$ Robô de A ou B, d representa um inteiro. No tabuleiro inicial, d é sempre igual a 1 }
+\item{$Rd$ $\rightarrow$ Recurso com energia igual a d. No tabuleiro inicial, d pode variar de 1 a 9}
+\end{itemize}
+
+Assim que receber o tabuleiro, o jogador A deverá enviar sua ação. O jogador B só envia sua ação depois de receber a ação do jogador A.
+
+Toda comunicação é feita pela entrada e saída padrão. O programa do jogador deve enviar o seu movimento no formato correto na saída padrão, receber o movimento do jogador adversário da entrada padrão.
+
+Uma ação tem o seguinte formato:
+\begin{verbatim}
+A 7 15 7 16
+\end{verbatim}
+
+O primeiro elemento corresponde ao jogador que efetua a ação (A ou B). Os seguintes 4 elementos são, respectivamente i1, j1, i2, j2, onde (i1,j1) é a posição do robô antes da ação e (i2,j2) é a posição do robô depois da ação.
+
+\textbf{Importante:} i representa a linha de cima para baixo do tabuleiro, começando do zero. j representa a coluna da esquerda para direita no tabuleiro, comelando do zero.
 
 \end{document}

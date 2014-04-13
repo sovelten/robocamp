@@ -114,8 +114,8 @@ rounds pHandles gs = do
               (Move pl p1 p2) = lastMove gs
     
 main = do
-    (hinA,houtA,herrA,pA) <- (runInteractiveCommand "./PlayerInteractive")
-    (hinB,houtB,herrB,pB) <- (runInteractiveCommand "./PlayerInteractive")
+    (hinA,houtA,herrA,pA) <- (runInteractiveCommand "./PlayerMain")
+    (hinB,houtB,herrB,pB) <- (runInteractiveCommand "./PlayerMain")
     mapM_ (flip hSetBinaryMode False) [hinA,hinB,houtA,houtB]
     mapM_ (flip hSetBuffering LineBuffering) [hinA,hinB]
     mapM_ (flip hSetBuffering NoBuffering) [houtA,houtB]
