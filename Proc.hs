@@ -1,6 +1,7 @@
 import Control.Monad
 import Data.Maybe
 import Data.Either
+import System.Environment
 import System.IO
 import System.Process
 import System.Random
@@ -54,11 +55,15 @@ maybeToEither leftMsg = maybe (Left leftMsg) Right
 
 recvMove :: Handle -> IO (Either String Move)
 recvMove hout = do
-    ans <- timeout 10000 $ hGetLine hout
-    let move = maybeToEither "Timeout" ans
-    case move of
-        (Left msg) -> return (Left msg)
-        (Right str) -> return $ readCmd str
+    isEOF <- hIsEOF hout
+    if isEOF then
+        return (Left "Comunicacao interrompida")
+    else do
+        ans <- timeout 10000 $ hGetLine hout
+        let move = maybeToEither "Timeout" ans
+        case move of
+            (Left msg) -> return (Left msg)
+            (Right str) -> return $ readCmd str
 
 sendMove :: Handle -> Move -> IO ()
 sendMove hin m = hPutStrLn hin $ moveToStr m
@@ -114,20 +119,22 @@ rounds pHandles gs = do
               (Move pl p1 p2) = lastMove gs
     
 main = do
-    (hinA,houtA,herrA,pA) <- (runInteractiveCommand "./PlayerMain")
-    (hinB,houtB,herrB,pB) <- (runInteractiveCommand "./PlayerMain")
+    [pa,pb] <- getArgs
+    (hinA,houtA,herrA,pA) <- (runInteractiveCommand ("./"++pa))
+    (hinB,houtB,herrB,pB) <- (runInteractiveCommand ("./"++pb))
     mapM_ (flip hSetBinaryMode False) [hinA,hinB,houtA,houtB]
     mapM_ (flip hSetBuffering LineBuffering) [hinA,hinB]
     mapM_ (flip hSetBuffering NoBuffering) [houtA,houtB]
     g <- getStdGen
     let board = genBoard g
+    putStr (prettyBoard board)
     let (m,n) = bounds board
     let str = show m ++ " " ++ show n ++ "\n" ++ (prettyBoard board)
     hPutStr hinA ("A\n" ++ str)
     hPutStr hinB ("B\n" ++ str)
     gs <- firstRound houtA (GameState board 0 Nothing []) 
     endGs <- rounds ((hinA,houtA),(hinB,houtB)) gs 
-    putStr (unlines (map show (moveLog endGs)))
+    putStr (unlines (map moveToStr (reverse $ moveLog endGs)))
     if (isJust $ victory endGs)
         then putStrLn (snd (fromJust $ victory endGs))
         else do
