@@ -33,6 +33,9 @@ opponent A = B
 opponent B = A
 
 --Pretty printing
+moveToStr :: Move -> String
+moveToStr (Move p (x1,y1) (x2,y2)) = unwords [show p,show x1,show y1,show x2,show y2]
+
 prettyBoard :: Board -> String
 prettyBoard = unlines . map (concatMap prettySquare)
 
@@ -62,12 +65,12 @@ readSquare (x:xs)
     | otherwise = Nothing
 
 inside :: (Int,Int) -> Pos -> Bool
-inside (m,n) (x,y) = x >= 0 && x < n && y >= 0 && y < n
+inside (m,n) (x,y) = x >= 0 && x < m && y >= 0 && y < n
 
-west (x,y) = (x-1,y)
-east (x,y) = (x+1,y)
-north (x,y) = (x,y-1)
-south (x,y) = (x,y+1)
+west (x,y) = (x,y-1)
+east (x,y) = (x,y+1)
+north (x,y) = (x-1,y)
+south (x,y) = (x+1,y)
 
 bounds :: [[a]] -> (Int,Int)
 bounds b = (length b, length (head b))
@@ -82,18 +85,24 @@ divide :: Int -> [a] -> [[a]]
 divide _ [] = []
 divide n list = take n list : divide n (drop n list)
 
+genResources :: RandomGen g => g -> Int -> [Resource]
+genResources g n = map Resource randList
+    where
+        randList = take n (randomRs (1,9) g :: [Int])
+
 genBoard :: RandomGen g => g -> Board
 genBoard g = divide n (shuffle' squareList (m*n) g5)
     where
         (m,g1) = randomR (10,30::Int) g
         (n,g2) = randomR (10,30) g1
         (r,g3) = randomR (2,6) g2
-        (x,g4) = randomR (10,30) g3
-        (k,g5) = randomR (2,12) g4
+        (x,g4) = randomR (5,25) g3
+        (k,g5) = randomR (2,10) g4
+        resources = genResources g5 k
         squareList = replicate r (R (Robot A 1)) ++
                      replicate r (R (Robot B 1)) ++
                      replicate x Wall ++
-                     replicate k (E (Resource 1)) ++
+                     map E resources ++
                      replicate (m*n - 2*r - x - k) Empty
 
 genBoard2 :: RandomGen g => g -> Board

@@ -1,12 +1,10 @@
-import Control.Monad
-import Data.Maybe
-import Data.Either
-import System.Environment
+import Data.Maybe (isJust, fromJust)
+import System.Environment (getArgs)
 import System.IO
-import System.Process
-import System.Random
-import System.Timeout
-import Text.Read
+import System.Process (runInteractiveCommand)
+import System.Random (getStdGen)
+import System.Timeout (timeout)
+import Text.Read (readMaybe)
 import Board
 
 type ProcessHandles = (Handle,Handle)
@@ -25,9 +23,6 @@ readCmd str = if isJust p && all isJust [x1,y1,x2,y2] then
     where input = words str
           p = readMaybe (head input)
           [x1,y1,x2,y2] = map (readMaybe) (tail input)
-
-moveToStr :: Move -> String
-moveToStr (Move p (x1,y1) (x2,y2)) = unwords [show p,show x1,show y1,show x2,show y2]
 
 listRobots :: RobotPlayer -> Board -> [Robot]
 listRobots p = (map fromSquare) . filter (isFromPlayer p) . concat
@@ -127,11 +122,11 @@ main = do
     mapM_ (flip hSetBuffering NoBuffering) [houtA,houtB]
     g <- getStdGen
     let board = genBoard g
-    putStr (prettyBoard board)
     let (m,n) = bounds board
     let str = show m ++ " " ++ show n ++ "\n" ++ (prettyBoard board)
     hPutStr hinA ("A\n" ++ str)
     hPutStr hinB ("B\n" ++ str)
+    putStr str
     gs <- firstRound houtA (GameState board 0 Nothing []) 
     endGs <- rounds ((hinA,houtA),(hinB,houtB)) gs 
     putStr (unlines (map moveToStr (reverse $ moveLog endGs)))
