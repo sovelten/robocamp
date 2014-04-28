@@ -1,8 +1,10 @@
+module Game where
+
+import Control.Monad
 import Data.Maybe (isJust, fromJust)
 import System.Environment (getArgs)
 import System.IO
 import System.Process (runInteractiveCommand)
-import System.Random (getStdGen)
 import System.Timeout (timeout)
 import Text.Read (readMaybe)
 import Board
@@ -12,6 +14,14 @@ type ProcessHandles = (Handle,Handle)
 type Victory = (RobotPlayer,String)
 
 data GameState = GameState {gameBoard::Board, turnCount::Int, victory::Maybe Victory, moveLog::[Move]}
+
+--For debug purposes
+prettyGame :: GameState -> String
+prettyGame (GameState b i st _) = 
+    ("Round: " ++ (show i) ++ "\n" ++
+     "State: " ++ (show st) ++ "\n") ++
+    (prettyBoard b) ++
+    ("Victory: " ++ (show $ checkEndOfGame b)) ++ "\n\n"
 
 lastMove :: GameState -> Move
 lastMove = head . moveLog
@@ -23,9 +33,6 @@ readCmd str = if isJust p && all isJust [x1,y1,x2,y2] then
     where input = words str
           p = readMaybe (head input)
           [x1,y1,x2,y2] = map (readMaybe) (tail input)
-
-listRobots :: RobotPlayer -> Board -> [Robot]
-listRobots p = (map fromSquare) . filter (isFromPlayer p) . concat
 
 checkWinner :: Board -> Maybe RobotPlayer
 checkWinner board =
@@ -43,18 +50,26 @@ checkWinner board =
         aRobots = listRobots A board
         bRobots = listRobots B board
         aEnergy = sum $ map (robotEnergy) aRobots
-        bEnergy = sum $ map (robotEnergy) aRobots
+        bEnergy = sum $ map (robotEnergy) bRobots
 
 maybeToEither :: a -> Maybe b -> Either a b
 maybeToEither leftMsg = maybe (Left leftMsg) Right
 
+recvMove2 :: Handle -> IO (Either String Move)
+recvMove2 hout = do
+    ans <- timeout 3000000 $ hGetLine hout
+    let move = maybeToEither "Timeout" ans
+    case move of
+        (Left msg) -> return (Left msg)
+        (Right str) -> return $ readCmd str
+    
 recvMove :: Handle -> IO (Either String Move)
 recvMove hout = do
     isEOF <- hIsEOF hout
     if isEOF then
         return (Left "Comunicacao interrompida")
     else do
-        ans <- timeout 10000 $ hGetLine hout
+        ans <- timeout 30000 $ hGetLine hout
         let move = maybeToEither "Timeout" ans
         case move of
             (Left msg) -> return (Left msg)
@@ -77,7 +92,13 @@ move (Move pl p1 p2) board = maybeToEither message nb
           
 checkEndOfGame :: Board -> Maybe Victory
 checkEndOfGame board =
-    if outA then (Just (B,"B venceu")) else if outB then (Just (A, "A venceu")) else Nothing
+    if outA && (not outB)
+        then (Just (B,"B venceu"))
+        else if outB && (not outA)
+            then (Just (A, "A venceu"))
+            else if outA && outB
+                then (Just (A, "Empate")) --gambiarra
+                else Nothing
     where
         outA = outOfRobots A board
         outB = outOfRobots B board
@@ -112,28 +133,3 @@ rounds pHandles gs = do
     else rounds pHandles newGs
         where handles = if (pl == A) then snd pHandles else fst pHandles
               (Move pl p1 p2) = lastMove gs
-    
-main = do
-    [pa,pb] <- getArgs
-    (hinA,houtA,herrA,pA) <- (runInteractiveCommand ("./"++pa))
-    (hinB,houtB,herrB,pB) <- (runInteractiveCommand ("./"++pb))
-    mapM_ (flip hSetBinaryMode False) [hinA,hinB,houtA,houtB]
-    mapM_ (flip hSetBuffering LineBuffering) [hinA,hinB]
-    mapM_ (flip hSetBuffering NoBuffering) [houtA,houtB]
-    g <- getStdGen
-    let board = genBoard g
-    let (m,n) = bounds board
-    let str = show m ++ " " ++ show n ++ "\n" ++ (prettyBoard board)
-    hPutStr hinA ("A\n" ++ str)
-    hPutStr hinB ("B\n" ++ str)
-    putStr str
-    gs <- firstRound houtA (GameState board 0 Nothing []) 
-    endGs <- rounds ((hinA,houtA),(hinB,houtB)) gs 
-    putStr (unlines (map moveToStr (reverse $ moveLog endGs)))
-    if (isJust $ victory endGs)
-        then putStrLn (snd (fromJust $ victory endGs))
-        else do
-            let win = checkWinner (gameBoard endGs)
-            if (isJust win)
-                then putStrLn (show (fromJust win))
-                else putStrLn "Empate"

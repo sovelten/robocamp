@@ -20,7 +20,7 @@ foldMove [] _ = []
 
 printRound :: (Int,(Move,Board)) -> IO () 
 printRound (i,(m,b)) = do
-    putStrLn ("Round " ++ (show i) ++ ": " ++ (moveToStr m))
+    putStrLn ("Turn " ++ (show i) ++ ": " ++ (moveToStr m))
     putStrLn $ prettyBoard b
 
 main = do
@@ -28,5 +28,9 @@ main = do
     board <- fmap (fromJust . readBoard) (replicateM m getLine)
     lines <- fmap lines getContents 
     let moves = catMaybes (map (readMove) lines) :: [Move]
-    let boards = zip [1..] (zip moves (foldMove moves board))
-    sequence_ (map printRound boards) 
+    let boards = foldMove moves board
+    let zboards = zip [1..] (zip moves boards)
+    sequence_ (map printRound zboards) 
+    --let (Move pl p1 p2) = last moves
+    --putStrLn $ show  $ isValid pl (p1,p2) (last (init boards))
+    --putStr $ prettyBoard $ fromJust $ boardMove (Move pl p1 p2) (last (init boards))

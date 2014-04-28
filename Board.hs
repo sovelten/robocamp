@@ -178,3 +178,6 @@ getRobots p board = findPos (isFromPlayer p) board
 
 outOfRobots :: RobotPlayer -> Board -> Bool
 outOfRobots p board = null (getRobots p board)
+
+listRobots :: RobotPlayer -> Board -> [Robot]
+listRobots p = (map fromSquare) . filter (isFromPlayer p) . concat
