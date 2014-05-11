@@ -1,6 +1,7 @@
 import Board
 import Control.Monad  
 import Data.Maybe
+import Game
 import Text.Read (readMaybe)
 
 readMove :: String -> Maybe Move
@@ -32,5 +33,5 @@ main = do
     let zboards = zip [1..] (zip moves boards)
     sequence_ (map printRound zboards) 
     --let (Move pl p1 p2) = last moves
-    --putStrLn $ show  $ isValid pl (p1,p2) (last (init boards))
+    --putStrLn $ show  $ checkWinner (last boards)
     --putStr $ prettyBoard $ fromJust $ boardMove (Move pl p1 p2) (last (init boards))

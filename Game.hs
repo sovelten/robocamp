@@ -11,7 +11,14 @@ import Board
 
 type ProcessHandles = (Handle,Handle)
 
-type Victory = (RobotPlayer,String)
+data EndGame = Awon | Bwon | Tie
+    deriving (Show)
+
+win :: RobotPlayer -> EndGame
+win A = Awon
+win B = Bwon
+
+type Victory = (EndGame,String)
 
 data GameState = GameState {gameBoard::Board, turnCount::Int, victory::Maybe Victory, moveLog::[Move]}
 
@@ -38,7 +45,7 @@ checkWinner :: Board -> Maybe RobotPlayer
 checkWinner board =
     if aEnergy > bEnergy
         then (Just A)
-    else if bEnergy < aEnergy
+    else if bEnergy > aEnergy
         then (Just B)
     else if length aRobots > length bRobots
         then (Just A)
@@ -93,11 +100,11 @@ move (Move pl p1 p2) board = maybeToEither message nb
 checkEndOfGame :: Board -> Maybe Victory
 checkEndOfGame board =
     if outA && (not outB)
-        then (Just (B,"B venceu"))
+        then (Just (Bwon,"Fim de Jogo"))
         else if outB && (not outA)
-            then (Just (A, "A venceu"))
+            then (Just (Awon, "Fim de Jogo"))
             else if outA && outB
-                then (Just (A, "Empate")) --gambiarra
+                then (Just (Tie, "Ops")) --gambiarra [fixed]
                 else Nothing
     where
         outA = outOfRobots A board
@@ -108,13 +115,13 @@ turn proc gs = do
     plMove <- comm (Move pl p1 p2) proc
     case plMove of
         (Right mv) -> return (update mv gs)
-        (Left msg) -> return (GameState (gameBoard gs) ((turnCount gs) +1) (Just (pl,msg)) (moveLog gs))
+        (Left msg) -> return (GameState (gameBoard gs) ((turnCount gs) +1) (Just (win pl,msg)) (moveLog gs))
         where (Move pl p1 p2) = lastMove gs
 
 update :: Move -> GameState -> GameState
 update (Move pl p1 p2) (GameState board i st ml) = 
     case nb of
-        (Left str) -> (GameState board (i+1) (Just ((opponent pl),str)) ((Move pl p1 p2):ml))
+        (Left str) -> (GameState board (i+1) (Just ((win $ opponent pl),str)) ((Move pl p1 p2):ml))
         (Right b)  -> (GameState b (i+1) (checkEndOfGame b) ((Move pl p1 p2):ml))
         where nb = move (Move pl p1 p2) board
 
@@ -123,7 +130,7 @@ firstRound hout (GameState board i st ml) = do
     plMove <- recvMove hout
     case plMove of
         (Right mv) -> return $ update mv (GameState board i st ml)
-        (Left msg) -> return (GameState board (i+1) (Just (B,msg)) ml)
+        (Left msg) -> return (GameState board (i+1) (Just (win B,msg)) ml)
 
 rounds :: (ProcessHandles,ProcessHandles) -> GameState -> IO GameState
 rounds pHandles gs = do
