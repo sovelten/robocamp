@@ -62,24 +62,17 @@ checkWinner board =
 maybeToEither :: a -> Maybe b -> Either a b
 maybeToEither leftMsg = maybe (Left leftMsg) Right
 
-recvMove2 :: Handle -> IO (Either String Move)
-recvMove2 hout = do
-    ans <- timeout 3000000 $ hGetLine hout
-    let move = maybeToEither "Timeout" ans
-    case move of
-        (Left msg) -> return (Left msg)
-        (Right str) -> return $ readCmd str
-    
 recvMove :: Handle -> IO (Either String Move)
 recvMove hout = do
     isEOF <- hIsEOF hout
     if isEOF then
         return (Left "Comunicacao interrompida")
+        --return (Left "Comunicacao interrompida")
     else do
-        ans <- timeout 30000 $ hGetLine hout
+        ans <- timeout 3000000 $ hGetLine hout
         let move = maybeToEither "Timeout" ans
         case move of
-            (Left msg) -> return (Left msg)
+            (Left msg) -> return (Left "Timeout")
             (Right str) -> return $ readCmd str
 
 sendMove :: Handle -> Move -> IO ()

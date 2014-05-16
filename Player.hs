@@ -35,6 +35,7 @@ readCmd str = (Move p (x1,y1) (x2,y2))
 sendMove :: RobotPlayer -> Board -> IO Board
 sendMove p board = do
     let (move,newBoard) = action p board  
+    
     putStrLn $ command move
     return newBoard 
 

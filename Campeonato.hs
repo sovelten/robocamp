@@ -124,8 +124,9 @@ campeonato testDir players id = do
     return scores
 
 main = do
+    args <- getArgs
     baseDir <- getCurrentDirectory
-    let testDir = combine baseDir "Teste" 
+    let testDir = combine baseDir (head args) 
     setCurrentDirectory testDir
     runIO "unzip \\*.zip"
     files <- getDirectoryContents testDir

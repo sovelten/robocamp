@@ -8,7 +8,7 @@ import Data.Maybe
 --Armazena o estado do tabuleiro e alterna entre receber acao do oponente na entrada padrao
 -- e enviar uma acao na saida padrao
 main = do
-    hSetBuffering stdout LineBuffering
+    hSetBuffering stdout NoBuffering
     p <- fmap read getLine
     [m,n] <- fmap ((map read) . words) getLine
     board <- fmap (fromJust . readBoard) (replicateM m getLine)

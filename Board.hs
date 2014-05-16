@@ -90,6 +90,31 @@ genResources g n = map Resource randList
     where
         randList = take n (randomRs (1,9) g :: [Int])
 
+genNiceBoard :: IO Board
+genNiceBoard = do
+    g <- getStdGen
+    let board = genBoard g
+    if isNiceBoard board
+        then return board
+        else genNiceBoard
+
+isStuck :: Board -> Pos -> Bool
+isStuck board p = null $ availableMove board p
+
+isNiceBoard :: Board -> Bool
+isNiceBoard board = all (not . isStuck board) robots
+    where
+        robots = getRobots A board ++ getRobots B board
+
+availableMove :: Board -> Pos -> [(Pos,Pos)]
+availableMove board p1 = [(p1,q) | q <- map snd sqrPosTuple]
+    where
+        newPosList = filter (insideBoard board) (map ($p1) [west, east, north, south])
+        sqrPosTuple = filter (isEmpty . fst) (zip (map ((flip fromPos) board) newPosList) newPosList)
+
+isEmpty :: Square -> Bool
+isEmpty = (== Empty)
+
 genBoard :: RandomGen g => g -> Board
 genBoard g = divide n (shuffle' squareList (m*n) g5)
     where

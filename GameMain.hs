@@ -11,7 +11,7 @@ main = do
     (hinA,houtA,herrA,pA) <- (runInteractiveCommand ("./" ++ pa))
     (hinB,houtB,herrB,pB) <- (runInteractiveCommand ("./" ++ pb))
     mapM_ (flip hSetBinaryMode False) [hinA,hinB,houtA,houtB]
-    mapM_ (flip hSetBuffering LineBuffering) [hinA,hinB]
+    mapM_ (flip hSetBuffering NoBuffering) [hinA,hinB]
     mapM_ (flip hSetBuffering NoBuffering) [houtA,houtB]
     [m,n] <- fmap ((map read) . words) getLine
     board <- fmap (fromJust . readBoard) (replicateM m getLine)
