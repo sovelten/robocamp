@@ -1,6 +1,7 @@
 import Data.Function
 import Data.List
 import System.Directory
+import System.Environment
 import System.FilePath
 import System.IO
 import Text.Regex.Posix
@@ -73,8 +74,10 @@ getWinner log =
 
 runGameWithId :: Int -> String -> FilePath -> (Jogador, Jogador) -> IO [Score]
 runGameWithId runID board testDir (p1,p2) = do
+    let logfileName = getLogfileName runID p1 p2
+    putStrLn logfileName
     (log,st) <- runGame board (execPath p1) (execPath p2)
-    writeFile (combine testDir (getLogfileName runID p1 p2)) log
+    writeFile (combine testDir logfileName) log
     case st of
         Avenceu -> return [((playerID p1),3)]
         Bvenceu -> return [((playerID p2),3)]

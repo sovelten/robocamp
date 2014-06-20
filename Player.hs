@@ -14,12 +14,6 @@ action p board = ((Move p p1 p2), (fromJust $ boardMove (Move p p1 p2) board))
 moveRobot :: Board -> [Pos] -> (Pos,Pos)
 moveRobot board points = head (concatMap (availableMove board) points)
 
-availableMove :: Board -> Pos -> [(Pos,Pos)]
-availableMove board p1 = [(p1,q) | q <- map snd sqrPosTuple]
-    where
-        newPosList = filter (insideBoard board) (map ($p1) [west, east, north, south])
-        sqrPosTuple = filter (isEmpty . fst) (zip (map ((flip fromPos) board) newPosList) newPosList)
-
 isEmpty :: Square -> Bool
 isEmpty = (== Empty)
 
