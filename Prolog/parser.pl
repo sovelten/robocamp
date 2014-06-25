@@ -1,42 +1,33 @@
-:- use_module(library(dcg/basics)).
-
-%
 %Gramatica do Parser
 board(Z) --> line(X), {Z = [X]}.
 board(Z) --> line(X), board(Y), {Z = [X | Y]}.
+
 line(L) --> sqr(X), [10], {L = [X]}.
 line(L) --> sqr(X), line(Y), {L = [X | Y]}.
-sqr(S) --> [X|T], {square([X|T],S)}.
 
-robot(R) --> player(P), integer(N), {R = [P,N]}.
-resource(R) --> "R", integer(N), {R = ["R",N]}.
+sqr(S) --> resource(S).
+sqr(S) --> robot(S).
+sqr(S) --> wall(S).
+sqr(S) --> empty(S).
+
+wall(W) --> "XX", {W = "X"}.
+empty(E) --> "..", {E = "."}.
+robot(R) --> player(P), digit(N), {R = [P,N]}.
+resource(R) --> "R", digit(N), {R = ["R",N]}.
+
+digit(D) --> [D], {code_type(D, digit)}.
+
+digits([H|T]) --> digit(H), !, digits(T).
+digits([]) --> [].
+
+num(N) --> digits(L), {number_codes(N,L)}.
 
 player(P) --> "A", {P = "A"}.
 player(P) --> "B", {P = "B"}.
 
-num(N) --> integer(N).
-
+%Predicados para parsing do tabuleiro todo ou
+% linha a linha
 parse_board(L, V) :- board(V, L, []).
 parse_line(L, V) :- line(V, L, []).
 
-square(L,S) :- isEmpty(L), S = ".".
-square(L,S) :- isWall(L), S = "X". 
-square([X|T],S) :- isRobot([X|T]), number_codes(N,T), S = [X,N].
-square([X|T],S) :- isResource([X|T]), number_codes(N,T), S = [X,N].
-                   
-isNumber([H|T]) :- code_type([H],digit), isNumber(T).
-isNumber([H|[]]) :- code_type([H],digit).
-isNumber([]) :- false.
-
-isEmpty(L) :- not( dif(L,"..")).
-
-isWall(L) :- not( dif(L,"XX")).
-
-isRobot([X|T]) :- isPlayer(X), isNumber(T).
-
-%65 e 66 sao codigos dos caracteres 'A' e 'B'
-isPlayer(C) :- C == 65.
-isPlayer(C) :- C == 66.
-                  
-% 82 equivale ao caracter 'R'
-isResource([X|T]) :- X == 82, isNumber(T).
+main :- write("hello").

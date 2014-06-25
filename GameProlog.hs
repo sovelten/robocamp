@@ -75,7 +75,7 @@ boardInput board p =
 getMove :: Player -> Board -> IO (Either String Move)
 getMove (Player p fp) board = do
     let input = boardInput board p
-    ans <- timeout 3000000 (run $ (echo input) -|- ("./" ++ fp))
+    ans <- timeout 5000000 (run $ (echo input) -|- ("./" ++ fp))
     let move = maybeToEither "Timeout" ans
     case move of
         (Left msg) -> return (Left "Timeout")

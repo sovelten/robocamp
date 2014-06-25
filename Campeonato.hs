@@ -85,7 +85,7 @@ runGameWithId runID board testDir (p1,p2) = do
 
 runGame :: String -> FilePath -> FilePath -> IO GameResult
 runGame board p1 p2 = do
-    log <- run $ (echo board) -|- ("./GameMain " ++ p1 ++ " " ++ p2)
+    log <- run $ (echo board) -|- ("./MainProlog " ++ p1 ++ " " ++ p2)
     case getWinner log of
         Left msg -> error msg
         Right st -> return (log, st)
@@ -126,6 +126,11 @@ campeonato testDir players id = do
     writeFile (combine testDir ("campeonato-" ++ (show id) ++ ".rank")) (showScoreList scores)
     return scores
 
+--Zip the player binary in a file
+zipBin :: Jogador -> IO ()
+zipBin j = runIO ("zip -j bins.zip " ++ exec)
+    where exec = execPath j
+
 main = do
     args <- getArgs
     baseDir <- getCurrentDirectory
@@ -133,9 +138,11 @@ main = do
     setCurrentDirectory testDir
     runIO "unzip \\*.zip"
     files <- getDirectoryContents testDir
-    let folders = filter (=~ "^ra*") files
+    let folders = filter (=~ "^(r|R)(a|A)*") files
+    print folders
     sequence $ map (doMake . (combine testDir)) folders --compile players
     players <- sequence $ map (getPlayer baseDir . (combine testDir)) folders
+    sequence $ map zipBin players --zip binaries
     setCurrentDirectory baseDir
     rankings <- sequence $ map (campeonato testDir players) [1..5]
     let globalRank = showScoreList $ reverse $ sortBy (compare `on` snd) $ score $ concat rankings
