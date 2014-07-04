@@ -1,3 +1,4 @@
+import Control.Monad
 import Data.Function
 import Data.List
 import System.Directory
@@ -18,6 +19,14 @@ execPath p = combine (path p) (execPlayerName p)
 type GameResult = (String,Estado)
 type Score = (String,Int)
 
+--Reads the board of a log file
+readLogBoard :: FilePath -> IO String
+readLogBoard f = do
+    (header:log) <- fmap lines $ readFile f
+    let [m,n] = map read $ words header  
+    let board = unlines $ take m log
+    return (header ++ "\n" ++ board)
+
 --Makes all pair of combinations of a list, without repetition
 combination :: [a] -> [(a,a)]
 combination [] = []
@@ -26,6 +35,7 @@ combination (x:xs) = map ((,)x) xs ++ combination xs
 doMake :: FilePath -> IO ()
 doMake path = do
     setCurrentDirectory path
+    putStrLn path
     runIO "make"
 
 getExecName :: FilePath -> IO String
@@ -71,17 +81,30 @@ getWinner log =
             else Left "Erro ao determinar vitoria"
     where fim = last $ lines log
 
+statusToScore :: Jogador -> Jogador -> Estado -> [Score]
+statusToScore p1 p2 st =
+    case st of
+        Avenceu -> [((playerID p1),3)]
+        Bvenceu -> [((playerID p2),3)]
+        Empate  -> [(playerID p1,1),(playerID p2,1)]
 
 runGameWithId :: Int -> String -> FilePath -> (Jogador, Jogador) -> IO [Score]
 runGameWithId runID board testDir (p1,p2) = do
     let logfileName = getLogfileName runID p1 p2
-    putStrLn logfileName
-    (log,st) <- runGame board (execPath p1) (execPath p2)
-    writeFile (combine testDir logfileName) log
-    case st of
-        Avenceu -> return [((playerID p1),3)]
-        Bvenceu -> return [((playerID p2),3)]
-        Empate  -> return [(playerID p1,1),(playerID p2,1)]
+    let logPath = combine testDir logfileName
+    exists <- doesFileExist logPath
+    if exists
+        then do
+            putStrLn ("exists " ++ logfileName)
+            log <- readFile logPath
+            case getWinner log of
+                Left msg -> error msg
+                Right st -> return $ statusToScore p1 p2 st
+        else do
+            putStrLn logfileName
+            (log,st) <- runGame board (execPath p1) (execPath p2)
+            writeFile logPath log
+            return $ statusToScore p1 p2 st
 
 runGame :: String -> FilePath -> FilePath -> IO GameResult
 runGame board p1 p2 = do
@@ -117,10 +140,20 @@ showScore s = (fst s) ++ "\t" ++ (show (snd s))
 showScoreList :: [Score] -> String
 showScoreList xs = unlines (("ID do jogador\tPontuacao"):(map showScore xs))
 
+getRightBoard :: FilePath -> IO String
+getRightBoard logfile = do
+    exists <- doesFileExist logfile
+    if exists
+        then readLogBoard logfile
+        else getBoard
+
 campeonato :: FilePath -> [Jogador] -> Int -> IO [Score]
 campeonato testDir players id = do
-    board <- getBoard
     let combs = combination players
+    --If first log file exists, use its board and not random board
+    let (teste1,teste2) = head combs
+    let logfile = getLogfileName id teste1 teste2
+    board <- getRightBoard (combine testDir logfile)
     scoreLists <- sequence $ map (twoGames id board testDir) combs
     let scores = reverse $ sortBy (compare `on` snd) $ score $ concat scoreLists
     writeFile (combine testDir ("campeonato-" ++ (show id) ++ ".rank")) (showScoreList scores)
@@ -138,12 +171,12 @@ main = do
     setCurrentDirectory testDir
     runIO "unzip \\*.zip"
     files <- getDirectoryContents testDir
-    let folders = filter (=~ "^(r|R)(a|A)*") files
-    print folders
+    let filtered = filter (=~ "^(r|R)(a|A)*") files
+    folders <- filterM (doesDirectoryExist) filtered
     sequence $ map (doMake . (combine testDir)) folders --compile players
     players <- sequence $ map (getPlayer baseDir . (combine testDir)) folders
-    sequence $ map zipBin players --zip binaries
     setCurrentDirectory baseDir
+    sequence $ map zipBin players --zip binaries
     rankings <- sequence $ map (campeonato testDir players) [1..5]
     let globalRank = showScoreList $ reverse $ sortBy (compare `on` snd) $ score $ concat rankings
     writeFile (combine testDir "total.rank") globalRank

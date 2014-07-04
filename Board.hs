@@ -118,8 +118,8 @@ isEmpty = (== Empty)
 genBoard :: RandomGen g => g -> Board
 genBoard g = divide n (shuffle' squareList (m*n) g5)
     where
-        (m,g1) = randomR (10,30::Int) g
-        (n,g2) = randomR (10,30) g1
+        (m,g1) = randomR (10,20::Int) g
+        (n,g2) = randomR (10,20) g1
         (r,g3) = randomR (2,6) g2
         (x,g4) = randomR (5,25) g3
         (k,g5) = randomR (2,10) g4
@@ -133,8 +133,8 @@ genBoard g = divide n (shuffle' squareList (m*n) g5)
 genBoard2 :: RandomGen g => g -> Board
 genBoard2 g = divide n squareList
     where
-        (m,g1) = randomR (10,30::Int) g
-        (n,g2) = randomR (10,30) g1
+        (m,g1) = randomR (10,20::Int) g
+        (n,g2) = randomR (10,20) g1
         randList = take (m*n) (randomRs (0,1) g2 :: [Double])
         squareList = map (genSquare) randList 
 
