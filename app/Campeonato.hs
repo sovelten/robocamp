@@ -1,7 +1,7 @@
 import Control.Monad
 import Data.Function
 import Data.List
-import System.Directory
+import qualified System.Directory as D
 import System.Environment
 import System.FilePath
 import System.IO
@@ -166,13 +166,13 @@ zipBin j = runIO ("zip -j bins.zip " ++ exec)
 
 main = do
     args <- getArgs
-    baseDir <- getCurrentDirectory
+    baseDir <- D.getCurrentDirectory
     let testDir = combine baseDir (head args) 
     setCurrentDirectory testDir
     runIO "unzip \\*.zip"
-    files <- getDirectoryContents testDir
+    files <- D.getDirectoryContents testDir
     let filtered = filter (=~ "^(r|R)(a|A)*") files
-    folders <- filterM (doesDirectoryExist) filtered
+    folders <- filterM (D.doesDirectoryExist) filtered
     sequence $ map (doMake . (combine testDir)) folders --compile players
     players <- sequence $ map (getPlayer baseDir . (combine testDir)) folders
     setCurrentDirectory baseDir

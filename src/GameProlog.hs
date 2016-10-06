@@ -2,7 +2,6 @@ module GameProlog where
 
 import Control.Monad
 import Data.Maybe (isJust, fromJust)
-import HSH
 import System.Environment (getArgs)
 import System.IO
 import System.Process (runInteractiveCommand)
